@@ -1,0 +1,81 @@
+/* 1. Reset everything so there are no hidden margins */
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+/* 2. Force the container to take the FULL screen */
+/* Update your .app-container class to lock the height and hide overflow */
+/* Update this block in your App.css */
+.app-container {
+  position: fixed; /* This nails the container to the screen */
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100dvh; /* 'dvh' accounts for mobile browser address bars! */
+  overflow: hidden; /* Absolutely prevents any scrolling */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(to bottom right, #fdf2f8, #faf5ff, #eff6ff);
+  padding: 2rem 1.5rem;
+  box-sizing: border-box;
+}
+
+/* 3. Center the image in the available space */
+.content-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+/* 4. Mobile responsive image (scales up on desktop) */
+.illustration-img {
+  width: 120%;
+  max-width: 800px;
+  object-fit: contain;
+  margin-bottom: -2rem;
+  /* Add this line: */
+  mix-blend-mode: multiply; 
+}
+
+@media (min-width: 768px) {
+  .illustration-img {
+    max-width: 450px; /* Larger size for desktop monitors */
+  }
+}
+
+/* 5. Center the button and constrain its width */
+.button-wrapper {
+  width: 100%;
+  max-width: 400px; /* Stops the button from stretching too wide on desktop */
+  display: flex;
+  justify-content: center;
+  margin-bottom: 8rem;
+}
+
+/* 6. Button styling */
+.start-button {
+  width: 100%;
+  border-radius: 1rem;
+  padding: 1rem 2rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(to right, #db2777, #9333ea, #2563eb);
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.start-button:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);
+}
