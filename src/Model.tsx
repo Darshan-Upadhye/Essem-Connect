@@ -1,9 +1,16 @@
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Box, Search, FileText, Image as ImageIcon, AlertTriangle, ChevronRight, XCircle } from "lucide-react";
+import { Box, Search, FileText, Image as ImageIcon, ChevronRight, XCircle } from "lucide-react";
 import { fullModelDatabase } from "./modelData"; 
-import { bomDatabase } from "./dataStore"; // Pulls the REAL data from your PDF!
+import { rawBomData } from "./dataStore"; // FIXED: Changed to rawBomData
 import "./Dashboard.css"; 
+
+// FIXED: Added TypeScript Interface to stop the "implicit any" errors
+interface BomItem {
+  id: string;
+  desc: string;
+  qty: string;
+}
 
 export default function Model() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -17,7 +24,8 @@ export default function Model() {
     );
   }, [searchQuery]);
 
-  const currentBom = selectedModel ? bomDatabase[selectedModel.fgNumber] : null;
+  // FIXED: Pointing to rawBomData
+  const currentBom = selectedModel ? rawBomData[selectedModel.fgNumber] : null;
 
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
@@ -48,7 +56,7 @@ export default function Model() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
         {filteredModels.length > 0 ? (
           filteredModels.map((model, idx) => {
-            const hasData = !!bomDatabase[model.fgNumber]; // Turns Green if BOM data is available!
+            const hasData = !!rawBomData[model.fgNumber]; // FIXED: Check against rawBomData
             return (
               <div key={idx} className="info-card" onClick={() => setSelectedModel(model)} style={{ padding: '1rem', borderLeftColor: hasData ? '#10b981' : '#d1d5db', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}>
                 <div>
@@ -77,19 +85,26 @@ export default function Model() {
 
               {currentBom ? (
                 <div>
-                  {/* Dynamic Image Loader! Save images as FGWHC123.jpg in your public folder */}
+                  {/* Dynamic Image Loader! */}
                   <div style={{ backgroundColor: '#f3f4f6', borderRadius: '0.5rem', minHeight: '150px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#9ca3af', marginBottom: '1.5rem', border: '2px dashed #d1d5db', overflow: 'hidden', position: 'relative' }}>
+                    
+                    {/* Placeholder Content (Sits underneath the image) */}
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 0 }}>
+                      <ImageIcon size={32} style={{ marginBottom: '0.5rem' }} />
+                      <span style={{ fontSize: '0.85rem' }}>Save image as {selectedModel.fgNumber}.jpg</span>
+                    </div>
+
+                    {/* Image (Sits on top. If it loads, it completely covers the placeholder text) */}
                     <img 
-                      src={`/${selectedModel.fgNumber}.jpg`} 
+                      key={selectedModel.fgNumber}
+                      src={`/${selectedModel.fgNumber}.png`} 
                       alt={`${selectedModel.fgNumber} Harness`} 
-                      style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', top: 0, left: 0 }}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', top: 0, left: 0, zIndex: 5, backgroundColor: '#f3f4f6' }}
                       onError={(e) => { 
-                        // If no image is found, hide the img tag and show the placeholder icon
+                        // If no image is found, hide this img tag so the placeholder shows through
                         e.currentTarget.style.display = 'none'; 
                       }} 
                     />
-                    <ImageIcon size={32} style={{ marginBottom: '0.5rem', zIndex: 1 }} />
-                    <span style={{ fontSize: '0.85rem', zIndex: 1 }}>Upload image as {selectedModel.fgNumber}.jpg</span>
                   </div>
 
                   <div style={{ marginBottom: '1.5rem' }}>
@@ -103,23 +118,19 @@ export default function Model() {
                         </tr>
                       </thead>
                       <tbody>
-                        {currentBom.materials.map((mat, i) => (
+                        {/* FIXED: Mapped directly over currentBom and added Types */}
+                        {currentBom.map((mat: BomItem, i: number) => (
                           <tr key={i} style={{ borderBottom: '1px solid #f3f4f6' }}>
                             <td style={{ padding: '0.5rem 0', color: '#374151', fontWeight: 600, verticalAlign: 'top', whiteSpace: 'nowrap', paddingRight: '10px' }}>{mat.id}</td>
-                            <td style={{ padding: '0.5rem 0.5rem', color: '#4b5563' }}>{mat.item}</td>
+                            <td style={{ padding: '0.5rem 0.5rem', color: '#4b5563' }}>{mat.desc}</td>
                             <td style={{ padding: '0.5rem 0', color: '#3b82f6', textAlign: 'right', fontWeight: 600, verticalAlign: 'top' }}>{mat.qty}</td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
-
-                  <div>
-                    <h4 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#ef4444', marginBottom: '0.75rem' }}><AlertTriangle size={18} /> Critical Defects (CTQ)</h4>
-                    <ul style={{ paddingLeft: '1.25rem', margin: 0, fontSize: '0.85rem', color: '#4b5563' }}>
-                      {currentBom.defects.map((def, i) => (<li key={i} style={{ marginBottom: '0.25rem' }}>{def}</li>))}
-                    </ul>
-                  </div>
+                  
+                  {/* Removed the defects section because it is not in the PDF data */}
                 </div>
               ) : (
                 <div style={{ textAlign: 'center', padding: '2rem 0' }}>

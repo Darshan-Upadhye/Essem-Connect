@@ -6,10 +6,29 @@ import {
   Clock, AlertCircle, FileText, ArrowLeft, Send, CheckCircle, Plus, Search, Trash2, CheckSquare, Square
 } from "lucide-react";
 import { fullModelDatabase } from "./modelData"; 
-import { materialDatabase } from "./dataStore"; 
+import { rawBomData } from "./dataStore"; // FIXED: Use rawBomData
 import "./Dashboard.css";
 
 type NoteType = "menu" | "material" | "dc" | "ot" | "4m" | "blank";
+
+// FIXED: Define the Material shape to stop TS errors
+interface MaterialItem {
+  id: string;
+  desc: string;
+}
+
+// FIXED: Dynamically extract all materials for the dropdown search
+const allMaterials: MaterialItem[] = [];
+const seenIds = new Set<string>();
+
+Object.values(rawBomData).forEach((bomList) => {
+  bomList.forEach((item) => {
+    if (!seenIds.has(item.id)) {
+      seenIds.add(item.id);
+      allMaterials.push({ id: item.id, desc: item.desc });
+    }
+  });
+});
 
 export default function Note() {
   const navigate = useNavigate();
@@ -32,8 +51,13 @@ export default function Note() {
   const [matForm, setMatForm] = useState({ lineNo: "", model: "", date: today });
   const [matSearch, setMatSearch] = useState("");
   const [showMatDropdown, setShowMatDropdown] = useState(false);
+  
+  // FIXED: Point to our dynamically generated allMaterials list and use proper types/names
   const filteredMaterials = useMemo(() => 
-    materialDatabase.filter(m => m.partId.toLowerCase().includes(matSearch.toLowerCase()) || m.description.toLowerCase().includes(matSearch.toLowerCase())), 
+    allMaterials.filter((m: MaterialItem) => 
+      m.id.toLowerCase().includes(matSearch.toLowerCase()) || 
+      m.desc.toLowerCase().includes(matSearch.toLowerCase())
+    ), 
   [matSearch]);
 
   // --- DC STATE ---
@@ -114,7 +138,7 @@ export default function Note() {
         modelName = note.model;
         const newItems = [...note.items];
         newItems[itemIdx].checked = !newItems[itemIdx].checked;
-        if(newItems[itemIdx].checked) matDesc = newItems[itemIdx].description;
+        if(newItems[itemIdx].checked) matDesc = newItems[itemIdx].desc; // FIXED: Changed to desc
         return { ...note, items: newItems };
       }
       return note;
@@ -302,9 +326,10 @@ export default function Note() {
                   />
                   {showMatDropdown && matSearch && (
                     <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, maxHeight: '200px', overflowY: 'auto', backgroundColor: '#fff', border: '1px solid #d1d5db', zIndex: 10, borderRadius: '0.5rem', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', marginTop: '4px' }}>
-                      {filteredMaterials.map(m => (
-                        <div key={m.partId} onMouseDown={(e) => e.preventDefault()} onClick={() => addMaterialToNote(m)} style={{ padding: '0.75rem', cursor: 'pointer', borderBottom: '1px solid #f3f4f6', fontSize: '0.8rem', color: '#374151' }}>
-                          <strong>{m.partId}</strong> - {m.description}
+                      {/* FIXED: Use proper types for map rendering */}
+                      {filteredMaterials.map((m: MaterialItem) => (
+                        <div key={m.id} onMouseDown={(e) => e.preventDefault()} onClick={() => addMaterialToNote(m)} style={{ padding: '0.75rem', cursor: 'pointer', borderBottom: '1px solid #f3f4f6', fontSize: '0.8rem', color: '#374151' }}>
+                          <strong>{m.id}</strong> - {m.desc}
                         </div>
                       ))}
                     </div>
@@ -316,7 +341,10 @@ export default function Note() {
                   {activeMaterialNote?.items?.map((item: any, idx: number) => (
                     <div key={idx} onClick={() => checkMaterialItem(activeMaterialNote.id, idx)} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', padding: '0.75rem', backgroundColor: '#fff', borderRadius: '0.5rem', border: '1px solid #fef08a', cursor: 'pointer', opacity: item.checked ? 0.6 : 1 }}>
                       {item.checked ? <CheckSquare size={20} color="#10b981" /> : <Square size={20} color="#ca8a04" />}
-                      <span style={{ fontSize: '0.85rem', color: '#374151', textDecoration: item.checked ? 'line-through' : 'none' }}>{item.partId} - {item.description}</span>
+                      <span style={{ fontSize: '0.85rem', color: '#374151', textDecoration: item.checked ? 'line-through' : 'none' }}>
+                        {/* FIXED: Changed to item.id and item.desc */}
+                        {item.id} - {item.desc}
+                      </span>
                     </div>
                   ))}
                 </div>

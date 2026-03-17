@@ -2,8 +2,27 @@ import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { FileText, Search, AlertCircle, Box, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { materialDatabase } from "./dataStore"; // Imports the dynamically generated list!
+import { rawBomData } from "./dataStore"; // FIXED: We pull the raw data here
 import "./Dashboard.css";
+
+// FIXED: Define the shape of our material to stop TypeScript errors
+interface MaterialItem {
+  id: string;
+  desc: string;
+}
+
+// FIXED: Automatically extract and deduplicate materials from rawBomData
+const allMaterials: MaterialItem[] = [];
+const seenIds = new Set<string>();
+
+Object.values(rawBomData).forEach((bomList) => {
+  bomList.forEach((item) => {
+    if (!seenIds.has(item.id)) {
+      seenIds.add(item.id);
+      allMaterials.push({ id: item.id, desc: item.desc });
+    }
+  });
+});
 
 export default function Material() {
   const navigate = useNavigate();
@@ -11,11 +30,11 @@ export default function Material() {
 
   const filteredMaterials = useMemo(() => {
     const query = searchQuery.toLowerCase().trim();
-    if (!query) return materialDatabase;
-    return materialDatabase.filter(
-      (mat) => 
-        mat.partId.toLowerCase().includes(query) || 
-        mat.description.toLowerCase().includes(query)
+    if (!query) return allMaterials; // FIXED: Pointing to our generated array
+    return allMaterials.filter(
+      (mat: MaterialItem) => // FIXED: Added type
+        mat.id.toLowerCase().includes(query) || // FIXED: Changed to mat.id
+        mat.desc.toLowerCase().includes(query)  // FIXED: Changed to mat.desc
     );
   }, [searchQuery]);
 
@@ -58,19 +77,19 @@ export default function Material() {
       </div>
 
       <p style={{ fontSize: '0.8rem', color: '#6b7280', marginBottom: '1rem' }}>
-        Showing {filteredMaterials.length} materials extracted from BOMs
+        Showing {filteredMaterials.length} unique materials extracted from BOMs
       </p>
 
       {/* Material List */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
         {filteredMaterials.length > 0 ? (
-          filteredMaterials.map((mat, idx) => (
+          filteredMaterials.map((mat: MaterialItem, idx: number) => ( // FIXED: Added types
             <div key={idx} className="info-card" style={{ padding: '1rem', borderLeftColor: '#f97316' }}>
               <span style={{ display: 'block', fontSize: '0.8rem', color: '#f97316', fontWeight: 700, marginBottom: '0.25rem' }}>
-                {mat.partId}
+                {mat.id} {/* FIXED: Changed to mat.id */}
               </span>
               <span style={{ display: 'block', fontSize: '0.9rem', color: '#374151', lineHeight: 1.4 }}>
-                {mat.description}
+                {mat.desc} {/* FIXED: Changed to mat.desc */}
               </span>
             </div>
           ))
