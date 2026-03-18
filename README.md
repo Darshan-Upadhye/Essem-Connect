@@ -52,8 +52,6 @@
 
 ## 📸 Screenshots
 
-*(Replace these placeholder links with actual screenshots of your app once uploaded to GitHub)*
-
 | Dashboard | Model Directory |
 | :---: | :---: |
 | <img src="https://via.placeholder.com/400x250.png?text=Dashboard+Screenshot" alt="Dashboard Preview" width="400"/> | <img src="https://via.placeholder.com/400x250.png?text=Model+Directory+Screenshot" alt="Model Directory Preview" width="400"/> |
