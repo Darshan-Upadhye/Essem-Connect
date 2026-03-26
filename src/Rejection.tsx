@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { XOctagon, Wrench, Scissors, FileEdit, ArrowLeft, Send, CheckCircle, Plus, Trash2, Search } from "lucide-react";
+import { XOctagon, Wrench, Scissors, FileEdit, ArrowLeft, Send, CheckCircle, Search } from "lucide-react";
 import { fullModelDatabase } from "./modelData"; 
 import "./Dashboard.css";
 
@@ -425,6 +425,7 @@ export default function Rejection() {
 
   // --- ASSEMBLY STATE ---
   const [assemblyDate, setAssemblyDate] = useState(today);
+  const [assemblySupervisor, setAssemblySupervisor] = useState("");
   const [assemblySearch, setAssemblySearch] = useState("");
   const [showAssemblyDropdown, setShowAssemblyDropdown] = useState(false);
   const [assemblyModel, setAssemblyModel] = useState("");
@@ -433,6 +434,7 @@ export default function Rejection() {
 
   // --- CRIMPING STATE ---
   const [crimpingDate, setCrimpingDate] = useState(today);
+  const [crimpingSupervisor, setCrimpingSupervisor] = useState("");
   const [crimpingSearch, setCrimpingSearch] = useState("");
   const [showCrimpingDropdown, setShowCrimpingDropdown] = useState(false);
   const [crimpingTerminal, setCrimpingTerminal] = useState("");
@@ -452,9 +454,9 @@ export default function Rejection() {
   const assemblyTotalRejection = useMemo(() => Object.values(assemblyDefects).reduce((a, b) => a + b, 0), [assemblyDefects]);
   const crimpingTotalRejection = useMemo(() => Object.values(crimpingDefects).reduce((a, b) => a + b, 0), [crimpingDefects]);
 
-  const handleDefectChange = (stateUpdater: any, defect: string, value: string) => {
+  const handleDefectChange = (stateUpdater: React.Dispatch<React.SetStateAction<Record<string, number>>>, defect: string, value: string) => {
     const num = parseInt(value, 10);
-    stateUpdater((prev: any) => {
+    stateUpdater((prev) => {
       const newState = { ...prev };
       if (isNaN(num) || num <= 0) {
         delete newState[defect];
@@ -488,12 +490,14 @@ export default function Rejection() {
 
   const submitAssembly = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!assemblySupervisor.trim()) return alert("Please enter the Supervisor's Name.");
     if (!assemblyModel) return alert("Please select a valid model from the dropdown list.");
     if (assemblyTotalRejection === 0) return alert("Please enter at least one rejection quantity.");
 
     const formData = new FormData();
     formData.append("sheetName", assemblyDate); // Tab name
     formData.append("type", "Assembly");
+    formData.append("Supervisor Name", assemblySupervisor);
     formData.append("Model", assemblyModel); 
     formData.append("Total Qty", assemblyTotalQty);
     formData.append("Total Rejections", assemblyTotalRejection.toString());
@@ -507,17 +511,19 @@ export default function Rejection() {
     } catch (err) { console.error(err); }
 
     triggerSuccess();
-    setAssemblyModel(""); setAssemblySearch(""); setAssemblyTotalQty(""); setAssemblyDefects({}); setAssemblyDate(today);
+    setAssemblyModel(""); setAssemblySearch(""); setAssemblySupervisor(""); setAssemblyTotalQty(""); setAssemblyDefects({}); setAssemblyDate(today);
   };
 
   const submitCrimping = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!crimpingSupervisor.trim()) return alert("Please enter the Supervisor's Name.");
     if (!crimpingTerminal) return alert("Please select a valid terminal from the dropdown list.");
     if (crimpingTotalRejection === 0) return alert("Please enter at least one rejection quantity.");
 
     const formData = new FormData();
     formData.append("sheetName", crimpingDate); // Tab name
     formData.append("type", "Crimping");
+    formData.append("Supervisor Name", crimpingSupervisor);
     formData.append("Terminal", crimpingTerminal); 
     formData.append("Total Qty", crimpingTotalQty);
     formData.append("Total Rejections", crimpingTotalRejection.toString());
@@ -531,7 +537,7 @@ export default function Rejection() {
     } catch (err) { console.error(err); }
 
     triggerSuccess();
-    setCrimpingTerminal(""); setCrimpingSearch(""); setCrimpingTotalQty(""); setCrimpingDefects({}); setCrimpingDate(today);
+    setCrimpingTerminal(""); setCrimpingSearch(""); setCrimpingSupervisor(""); setCrimpingTotalQty(""); setCrimpingDefects({}); setCrimpingDate(today);
   };
 
   const submitDailyNote = (e: React.FormEvent) => {
@@ -612,6 +618,11 @@ export default function Rejection() {
                 <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#374151', marginBottom: '0.5rem' }}>Date</label>
                 <input type="date" required value={assemblyDate} onChange={e => setAssemblyDate(e.target.value)} style={{ width: '100%', padding: '0.75rem', borderRadius: '0.5rem', border: '1px solid #d1d5db', outline: 'none', boxSizing: 'border-box' }} />
               </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#374151', marginBottom: '0.5rem' }}>Supervisor Name</label>
+                <input type="text" required value={assemblySupervisor} onChange={e => setAssemblySupervisor(e.target.value)} placeholder="Enter supervisor name" style={{ width: '100%', padding: '0.75rem', borderRadius: '0.5rem', border: '1px solid #d1d5db', outline: 'none', boxSizing: 'border-box' }} />
+              </div>
               
               <div style={{ position: 'relative' }}>
                 <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#374151', marginBottom: '0.5rem' }}>Search & Select Model</label>
@@ -678,6 +689,11 @@ export default function Rejection() {
               <div>
                 <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#374151', marginBottom: '0.5rem' }}>Date</label>
                 <input type="date" required value={crimpingDate} onChange={e => setCrimpingDate(e.target.value)} style={{ width: '100%', padding: '0.75rem', borderRadius: '0.5rem', border: '1px solid #d1d5db', outline: 'none', boxSizing: 'border-box' }} />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#374151', marginBottom: '0.5rem' }}>Supervisor Name</label>
+                <input type="text" required value={crimpingSupervisor} onChange={e => setCrimpingSupervisor(e.target.value)} placeholder="Enter supervisor name" style={{ width: '100%', padding: '0.75rem', borderRadius: '0.5rem', border: '1px solid #d1d5db', outline: 'none', boxSizing: 'border-box' }} />
               </div>
 
               <div style={{ position: 'relative' }}>
@@ -760,7 +776,7 @@ export default function Rejection() {
                 <div key={index} style={{ backgroundColor: '#f3f4f6', padding: '1rem', borderRadius: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', position: 'relative' }}>
                   <span style={{ position: 'absolute', top: '-10px', left: '-10px', background: '#8b5cf6', color: 'white', width: '24px', height: '24px', borderRadius: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '0.8rem', fontWeight: 'bold' }}>{item.sr}</span>
                   {noteItems.length > 1 && (
-                    <button type="button" onClick={() => removeNoteItem(index)} style={{ position: 'absolute', top: '10px', right: '10px', background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}><Trash2 size={18} /></button>
+                    <button type="button" onClick={() => removeNoteItem(index)} style={{ position: 'absolute', top: '10px', right: '10px', background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}><XOctagon size={18} /></button>
                   )}
                   <input type="text" required placeholder="SAP Code" value={item.sapCode} onChange={e => handleNoteItemChange(index, 'sapCode', e.target.value)} style={{ padding: '0.5rem', borderRadius: '0.25rem', border: '1px solid #d1d5db', outline: 'none' }} />
                   <input type="text" required placeholder="Part Description" value={item.desc} onChange={e => handleNoteItemChange(index, 'desc', e.target.value)} style={{ padding: '0.5rem', borderRadius: '0.25rem', border: '1px solid #d1d5db', outline: 'none' }} />
@@ -770,7 +786,7 @@ export default function Rejection() {
                 </div>
               ))}
               <button type="button" onClick={addNoteItem} style={{ padding: '0.75rem', backgroundColor: '#e5e7eb', color: '#4b5563', border: 'none', borderRadius: '0.5rem', fontWeight: 600, cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}>
-                <Plus size={18} /> Add Another Item
+                <CheckCircle size={18} /> Add Another Item
               </button>
               <button type="submit" style={{ marginTop: '1rem', padding: '0.85rem', backgroundColor: '#8b5cf6', color: 'white', border: 'none', borderRadius: '0.5rem', fontWeight: 600, cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}>
                 <Send size={18} /> Save Daily Note Locally
